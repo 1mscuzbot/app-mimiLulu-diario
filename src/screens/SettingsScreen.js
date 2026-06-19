@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import {
   View,
   Text,
@@ -8,9 +8,12 @@ import {
   Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+import { UserContext } from "../../App";
 import { getLimits, setLimits } from "../services/expenseService";
 
-export default function SettingsScreen({ user, navigation }) {
+export default function SettingsScreen({ onClose }) {
+  const user = useContext(UserContext);
   const [diario, setDiario] = useState("");
   const [semanal, setSemanal] = useState("");
   const [loading, setLoading] = useState(false);
@@ -37,7 +40,6 @@ export default function SettingsScreen({ user, navigation }) {
     try {
       await setLimits(d, s);
       Alert.alert("Salvo!", "Limites atualizados");
-      navigation.goBack();
     } catch (e) {
       Alert.alert("Erro", "Não foi possível salvar");
     } finally {
@@ -47,6 +49,13 @@ export default function SettingsScreen({ user, navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={onClose}>
+          <Ionicons name="close" size={28} color="#333" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Ajustes</Text>
+        <View style={{ width: 28 }} />
+      </View>
       <View style={styles.form}>
         <Text style={styles.title}>Limites de Gastos</Text>
 
@@ -82,7 +91,15 @@ export default function SettingsScreen({ user, navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#FFF0F5" },
-  form: { padding: 20, flex: 1, paddingTop: 40 },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  headerTitle: { fontSize: 18, fontWeight: "bold", color: "#333" },
+  form: { padding: 20, flex: 1, paddingTop: 20 },
   title: {
     fontSize: 22,
     fontWeight: "bold",

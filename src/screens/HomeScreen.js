@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { UserContext } from "../../App";
 import {
   subscribeTodayExpenses,
   subscribeYesterdayExpenses,
@@ -21,22 +22,25 @@ import {
   todayString,
   yesterdayString,
 } from "../services/expenseService";
+import AddExpenseScreen from "./AddExpenseScreen";
+import SettingsScreen from "./SettingsScreen";
 
-export default function HomeScreen({ user, onLogout, navigation }) {
+export default function HomeScreen({ onLogout }) {
+  const user = useContext(UserContext);
   const [todayExpenses, setTodayExpenses] = useState([]);
   const [yesterdayExpenses, setYesterdayExpenses] = useState([]);
   const [weekExpenses, setWeekExpenses] = useState([]);
   const [limits, setLimits] = useState({ diario: 100, semanal: 500 });
   const [showYesterday, setShowYesterday] = useState(false);
-
   const [editModal, setEditModal] = useState({ visible: false, expense: null });
+  const [showAddExpense, setShowAddExpense] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     const unsubToday = subscribeTodayExpenses(setTodayExpenses);
     const unsubYesterday = subscribeYesterdayExpenses(setYesterdayExpenses);
     const unsubWeek = subscribeWeekExpenses(setWeekExpenses);
     const unsubLimits = subscribeLimits(setLimits);
-
     return () => {
       unsubToday();
       unsubYesterday();
@@ -46,7 +50,6 @@ export default function HomeScreen({ user, onLogout, navigation }) {
   }, []);
 
   const todayTotal = todayExpenses.reduce((s, e) => s + e.value, 0);
-  const yesterdayTotal = yesterdayExpenses.reduce((s, e) => s + e.value, 0);
   const weekTotal = weekExpenses.reduce((s, e) => s + e.value, 0);
   const todayPercent = Math.min((todayTotal / limits.diario) * 100, 100);
   const weekPercent = Math.min((weekTotal / limits.semanal) * 100, 100);
@@ -93,7 +96,7 @@ export default function HomeScreen({ user, onLogout, navigation }) {
     ]);
   }
 
-  function renderExpenseItem(item, isYesterday) {
+  function renderExpenseItem(item) {
     return (
       <TouchableOpacity
         key={item.id}
@@ -126,14 +129,22 @@ export default function HomeScreen({ user, onLogout, navigation }) {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.greeting}>Olá, {user}!</Text>
-        <TouchableOpacity onPress={onLogout}>
-          <Ionicons name="log-out-outline" size={24} color="#666" />
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          <TouchableOpacity
+            style={styles.headerBtn}
+            onPress={() => setShowSettings(true)}
+          >
+            <Ionicons name="settings-outline" size={24} color="#666" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.headerBtn} onPress={onLogout}>
+            <Ionicons name="log-out-outline" size={24} color="#666" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <TouchableOpacity
         style={styles.fab}
-        onPress={() => navigation.navigate("AddExpense")}
+        onPress={() => setShowAddExpense(true)}
       >
         <Ionicons name="add" size={28} color="#FFF" />
       </TouchableOpacity>
@@ -196,7 +207,7 @@ export default function HomeScreen({ user, onLogout, navigation }) {
           color="#888"
         />
         <Text style={styles.yesterdayToggleText}>
-          Ontem (R$ {yesterdayTotal.toFixed(2)})
+          Ontem (R$ {yesterdayExpenses.reduce((s, e) => s + e.value, 0).toFixed(2)})
         </Text>
       </TouchableOpacity>
 
@@ -205,7 +216,7 @@ export default function HomeScreen({ user, onLogout, navigation }) {
           {yesterdayExpenses.length === 0 ? (
             <Text style={styles.emptyDayText}>Nenhum gasto ontem</Text>
           ) : (
-            yesterdayExpenses.map((item) => renderExpenseItem(item, true))
+            yesterdayExpenses.map((item) => renderExpenseItem(item))
           )}
         </View>
       )}
@@ -240,14 +251,11 @@ export default function HomeScreen({ user, onLogout, navigation }) {
           onPress={() => setEditModal({ visible: false, expense: null })}
         >
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
-              {editModal.expense?.item}
-            </Text>
+            <Text style={styles.modalTitle}>{editModal.expense?.item}</Text>
             <Text style={styles.modalSubtitle}>
               R$ {editModal.expense?.value?.toFixed(2)} —{" "}
               {editModal.expense?.addedBy}
             </Text>
-
             <TouchableOpacity
               style={styles.modalButton}
               onPress={() => handleMoveToToday(editModal.expense)}
@@ -255,7 +263,6 @@ export default function HomeScreen({ user, onLogout, navigation }) {
               <Ionicons name="today" size={20} color="#FFF" />
               <Text style={styles.modalButtonText}>Mover pra hoje</Text>
             </TouchableOpacity>
-
             <TouchableOpacity
               style={styles.modalButton}
               onPress={() => handleMoveToYesterday(editModal.expense)}
@@ -263,7 +270,6 @@ export default function HomeScreen({ user, onLogout, navigation }) {
               <Ionicons name="calendar" size={20} color="#FFF" />
               <Text style={styles.modalButtonText}>Mover pra ontem</Text>
             </TouchableOpacity>
-
             <TouchableOpacity
               style={[styles.modalButton, styles.modalDeleteButton]}
               onPress={() => handleDelete(editModal.expense)}
@@ -271,7 +277,6 @@ export default function HomeScreen({ user, onLogout, navigation }) {
               <Ionicons name="trash" size={20} color="#FFF" />
               <Text style={styles.modalButtonText}>Excluir</Text>
             </TouchableOpacity>
-
             <TouchableOpacity
               style={styles.modalCancel}
               onPress={() => setEditModal({ visible: false, expense: null })}
@@ -280,6 +285,22 @@ export default function HomeScreen({ user, onLogout, navigation }) {
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
+      </Modal>
+
+      <Modal
+        visible={showAddExpense}
+        animationType="slide"
+        onRequestClose={() => setShowAddExpense(false)}
+      >
+        <AddExpenseScreen onClose={() => setShowAddExpense(false)} />
+      </Modal>
+
+      <Modal
+        visible={showSettings}
+        animationType="slide"
+        onRequestClose={() => setShowSettings(false)}
+      >
+        <SettingsScreen onClose={() => setShowSettings(false)} />
       </Modal>
     </SafeAreaView>
   );
@@ -295,6 +316,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   greeting: { fontSize: 22, fontWeight: "bold", color: "#333" },
+  headerRight: { flexDirection: "row", gap: 12 },
+  headerBtn: { padding: 4 },
   summaryCard: {
     backgroundColor: "#FFF",
     marginHorizontal: 20,
@@ -333,10 +356,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginLeft: 6,
   },
-  yesterdayList: {
-    paddingHorizontal: 20,
-    marginBottom: 8,
-  },
+  yesterdayList: { paddingHorizontal: 20, marginBottom: 8 },
   emptyDayText: {
     fontSize: 13,
     color: "#ccc",

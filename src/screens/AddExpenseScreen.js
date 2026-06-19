@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { UserContext } from "../../App";
 import { addExpense, todayString, yesterdayString } from "../services/expenseService";
 
 function formatDate(str) {
@@ -18,7 +19,8 @@ function formatDate(str) {
   return `${d}/${m}`;
 }
 
-export default function AddExpenseScreen({ user, navigation }) {
+export default function AddExpenseScreen({ onClose }) {
+  const user = useContext(UserContext);
   const [item, setItem] = useState("");
   const [value, setValue] = useState("");
   const [selectedDate, setSelectedDate] = useState(todayString());
@@ -42,7 +44,7 @@ export default function AddExpenseScreen({ user, navigation }) {
       await addExpense(trimmedItem, numericValue, user, selectedDate);
       setItem("");
       setValue("");
-      navigation.goBack();
+      onClose();
     } catch (error) {
       Alert.alert("Erro", "Não foi possível salvar. Tenta de novo.");
     } finally {
@@ -57,7 +59,7 @@ export default function AddExpenseScreen({ user, navigation }) {
         style={styles.inner}
       >
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
+          <TouchableOpacity onPress={onClose}>
             <Ionicons name="close" size={28} color="#333" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Novo Gasto</Text>
