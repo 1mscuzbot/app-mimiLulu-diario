@@ -42,13 +42,13 @@ function getWeekRange() {
   monday.setDate(now.getDate() + diff);
   monday.setHours(0, 0, 0, 0);
 
-  const saturday = new Date(monday);
-  saturday.setDate(monday.getDate() + 5);
-  saturday.setHours(23, 59, 59, 999);
-
   const sunday = new Date(monday);
   sunday.setDate(monday.getDate() - 1);
   sunday.setHours(0, 0, 0, 0);
+
+  const saturday = new Date(sunday);
+  saturday.setDate(sunday.getDate() + 6);
+  saturday.setHours(23, 59, 59, 999);
 
   return { start: sunday, end: saturday };
 }
@@ -72,27 +72,53 @@ export async function deleteExpense(expenseId) {
   await deleteDoc(doc(db, EXPENSES_COLLECTION, expenseId));
 }
 
-export function subscribeByDate(dateStr, callback) {
+function listenQuery(q, callback) {
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const expenses = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      callback(expenses);
+    },
+    (error) => {
+      console.error("Firestore error:", error.code, error.message);
+      callback([]);
+    }
+  );
+}
+
+export function subscribeTodayExpenses(callback) {
+  const today = todayString();
   const q = query(
     collection(db, EXPENSES_COLLECTION),
-    where("date", "==", dateStr),
-    orderBy("createdAt", "asc")
+    where("date", "==", today)
   );
-  return onSnapshot(q, (snapshot) => {
-    const expenses = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+  return listenQuery(q, (expenses) => {
+    expenses.sort((a, b) => {
+      const ta = a.createdAt?.toMillis?.() || 0;
+      const tb = b.createdAt?.toMillis?.() || 0;
+      return ta - tb;
+    });
     callback(expenses);
   });
 }
 
-export function subscribeTodayExpenses(callback) {
-  return subscribeByDate(todayString(), callback);
-}
-
 export function subscribeYesterdayExpenses(callback) {
-  return subscribeByDate(yesterdayString(), callback);
+  const yesterday = yesterdayString();
+  const q = query(
+    collection(db, EXPENSES_COLLECTION),
+    where("date", "==", yesterday)
+  );
+  return listenQuery(q, (expenses) => {
+    expenses.sort((a, b) => {
+      const ta = a.createdAt?.toMillis?.() || 0;
+      const tb = b.createdAt?.toMillis?.() || 0;
+      return ta - tb;
+    });
+    callback(expenses);
+  });
 }
 
 export function subscribeWeekExpenses(callback) {
@@ -103,15 +129,17 @@ export function subscribeWeekExpenses(callback) {
   const q = query(
     collection(db, EXPENSES_COLLECTION),
     where("date", ">=", startStr),
-    where("date", "<=", endStr),
-    orderBy("date", "asc"),
-    orderBy("createdAt", "asc")
+    where("date", "<=", endStr)
   );
-  return onSnapshot(q, (snapshot) => {
-    const expenses = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+  return listenQuery(q, (expenses) => {
+    expenses.sort((a, b) => {
+      const da = a.date || "";
+      const db2 = b.date || "";
+      if (da !== db2) return da.localeCompare(db2);
+      const ta = a.createdAt?.toMillis?.() || 0;
+      const tb = b.createdAt?.toMillis?.() || 0;
+      return ta - tb;
+    });
     callback(expenses);
   });
 }
@@ -129,17 +157,20 @@ export async function setLimits(diario, semanal) {
 }
 
 export function subscribeLimits(callback) {
-  return onSnapshot(doc(db, LIMITS_DOC), (docSnap) => {
-    if (docSnap.exists()) {
-      callback(docSnap.data());
-    } else {
-      callback({ diario: 100, semanal: 500 });
-    }
-  });
+  return onSnapshot(
+    doc(db, LIMITS_DOC),
+    (docSnap) => {
+      if (docSnap.exists()) {
+        callback(docSnap.data());
+      } else {
+        callback({ diario: 100, semanal: 500 });
+      }
+    },
+    () => callback({ diario: 100, semanal: 500 })
+  );
 }
 
 export function getWeekLabel() {
-  const days = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
   const { start, end } = getWeekRange();
   const s = `${start.getDate()}/${start.getMonth() + 1}`;
   const e = `${end.getDate()}/${end.getMonth() + 1}`;
