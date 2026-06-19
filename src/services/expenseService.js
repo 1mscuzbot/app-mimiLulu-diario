@@ -5,10 +5,11 @@ import {
   where,
   orderBy,
   onSnapshot,
-  getDocs,
   doc,
   setDoc,
   getDoc,
+  updateDoc,
+  deleteDoc,
   Timestamp,
 } from "firebase/firestore";
 import { db } from "../config/firebase";
@@ -16,42 +17,65 @@ import { db } from "../config/firebase";
 const EXPENSES_COLLECTION = "gastos";
 const LIMITS_DOC = "limites/geral";
 
+function toDateString(d) {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function todayString() {
+  return toDateString(new Date());
+}
+
+function yesterdayString() {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return toDateString(d);
+}
+
 function getWeekRange() {
   const now = new Date();
   const dayOfWeek = now.getDay();
-  const diff = dayOfWeek === 0 ? 0 : -dayOfWeek;
-  const sunday = new Date(now);
-  sunday.setDate(now.getDate() + diff);
-  sunday.setHours(0, 0, 0, 0);
+  const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  const monday = new Date(now);
+  monday.setDate(now.getDate() + diff);
+  monday.setHours(0, 0, 0, 0);
 
-  const saturday = new Date(sunday);
-  saturday.setDate(sunday.getDate() + 6);
+  const saturday = new Date(monday);
+  saturday.setDate(monday.getDate() + 5);
   saturday.setHours(23, 59, 59, 999);
+
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() - 1);
+  sunday.setHours(0, 0, 0, 0);
 
   return { start: sunday, end: saturday };
 }
 
-function todayString() {
-  const d = new Date();
-  return d.toISOString().split("T")[0];
-}
-
-export async function addExpense(item, value, addedBy) {
+export async function addExpense(item, value, addedBy, customDate) {
   const docRef = await addDoc(collection(db, EXPENSES_COLLECTION), {
     item,
     value: parseFloat(value),
     addedBy,
     createdAt: Timestamp.now(),
-    date: todayString(),
+    date: customDate || todayString(),
   });
   return docRef.id;
 }
 
-export function subscribeTodayExpenses(callback) {
-  const today = todayString();
+export async function updateExpenseDate(expenseId, newDate) {
+  await updateDoc(doc(db, EXPENSES_COLLECTION, expenseId), { date: newDate });
+}
+
+export async function deleteExpense(expenseId) {
+  await deleteDoc(doc(db, EXPENSES_COLLECTION, expenseId));
+}
+
+export function subscribeByDate(dateStr, callback) {
   const q = query(
     collection(db, EXPENSES_COLLECTION),
-    where("date", "==", today),
+    where("date", "==", dateStr),
     orderBy("createdAt", "asc")
   );
   return onSnapshot(q, (snapshot) => {
@@ -63,12 +87,24 @@ export function subscribeTodayExpenses(callback) {
   });
 }
 
+export function subscribeTodayExpenses(callback) {
+  return subscribeByDate(todayString(), callback);
+}
+
+export function subscribeYesterdayExpenses(callback) {
+  return subscribeByDate(yesterdayString(), callback);
+}
+
 export function subscribeWeekExpenses(callback) {
   const { start, end } = getWeekRange();
+  const startStr = toDateString(start);
+  const endStr = toDateString(end);
+
   const q = query(
     collection(db, EXPENSES_COLLECTION),
-    where("createdAt", ">=", Timestamp.fromDate(start)),
-    where("createdAt", "<=", Timestamp.fromDate(end)),
+    where("date", ">=", startStr),
+    where("date", "<=", endStr),
+    orderBy("date", "asc"),
     orderBy("createdAt", "asc")
   );
   return onSnapshot(q, (snapshot) => {
@@ -110,4 +146,4 @@ export function getWeekLabel() {
   return `${s} — ${e}`;
 }
 
-export { todayString };
+export { todayString, yesterdayString };

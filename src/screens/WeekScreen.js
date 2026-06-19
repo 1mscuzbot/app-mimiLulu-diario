@@ -2,12 +2,22 @@ import { useState, useEffect } from "react";
 import {
   View,
   Text,
-  FlatList,
+  Modal,
   StyleSheet,
   SectionList,
+  TouchableOpacity,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { subscribeWeekExpenses, getWeekLabel } from "../services/expenseService";
+import { Ionicons } from "@expo/vector-icons";
+import {
+  subscribeWeekExpenses,
+  getWeekLabel,
+  updateExpenseDate,
+  deleteExpense,
+  todayString,
+  yesterdayString,
+} from "../services/expenseService";
 
 const DAY_NAMES = [
   "Domingo",
@@ -45,6 +55,7 @@ function formatDate(d) {
 
 export default function WeekScreen() {
   const [weekExpenses, setWeekExpenses] = useState([]);
+  const [editModal, setEditModal] = useState({ visible: false, expense: null });
 
   useEffect(() => {
     return subscribeWeekExpenses(setWeekExpenses);
@@ -68,6 +79,42 @@ export default function WeekScreen() {
   });
 
   const weekTotal = weekExpenses.reduce((s, e) => s + e.value, 0);
+
+  async function handleMoveToToday(expense) {
+    try {
+      await updateExpenseDate(expense.id, todayString());
+      setEditModal({ visible: false, expense: null });
+    } catch (e) {
+      Alert.alert("Erro", "Não foi possível mover o gasto");
+    }
+  }
+
+  async function handleMoveToYesterday(expense) {
+    try {
+      await updateExpenseDate(expense.id, yesterdayString());
+      setEditModal({ visible: false, expense: null });
+    } catch (e) {
+      Alert.alert("Erro", "Não foi possível mover o gasto");
+    }
+  }
+
+  function handleDelete(expense) {
+    Alert.alert("Excluir", `Excluir "${expense.item}"?`, [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Excluir",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await deleteExpense(expense.id);
+            setEditModal({ visible: false, expense: null });
+          } catch (e) {
+            Alert.alert("Erro", "Não foi possível excluir");
+          }
+        },
+      },
+    ]);
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -97,7 +144,11 @@ export default function WeekScreen() {
           </View>
         )}
         renderItem={({ item }) => (
-          <View style={styles.expenseItem}>
+          <TouchableOpacity
+            style={styles.expenseItem}
+            onLongPress={() => setEditModal({ visible: true, expense: item })}
+            delayLongPress={400}
+          >
             <View style={styles.expenseLeft}>
               <Text style={styles.expenseName}>{item.item}</Text>
               <Text style={styles.expenseBy}>{item.addedBy}</Text>
@@ -110,7 +161,7 @@ export default function WeekScreen() {
             >
               -R$ {item.value.toFixed(2)}
             </Text>
-          </View>
+          </TouchableOpacity>
         )}
         renderSectionFooter={({ section }) =>
           section.data.length === 0 ? (
@@ -121,6 +172,58 @@ export default function WeekScreen() {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
       />
+
+      <Modal
+        visible={editModal.visible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setEditModal({ visible: false, expense: null })}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setEditModal({ visible: false, expense: null })}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{editModal.expense?.item}</Text>
+            <Text style={styles.modalSubtitle}>
+              R$ {editModal.expense?.value?.toFixed(2)} —{" "}
+              {editModal.expense?.addedBy}
+            </Text>
+
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => handleMoveToToday(editModal.expense)}
+            >
+              <Ionicons name="today" size={20} color="#FFF" />
+              <Text style={styles.modalButtonText}>Mover pra hoje</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => handleMoveToYesterday(editModal.expense)}
+            >
+              <Ionicons name="calendar" size={20} color="#FFF" />
+              <Text style={styles.modalButtonText}>Mover pra ontem</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.modalButton, styles.modalDeleteButton]}
+              onPress={() => handleDelete(editModal.expense)}
+            >
+              <Ionicons name="trash" size={20} color="#FFF" />
+              <Text style={styles.modalButtonText}>Excluir</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.modalCancel}
+              onPress={() => setEditModal({ visible: false, expense: null })}
+            >
+              <Text style={styles.modalCancelText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -196,4 +299,33 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingLeft: 4,
   },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "#FFF",
+    borderRadius: 20,
+    padding: 24,
+    width: "80%",
+    alignItems: "center",
+  },
+  modalTitle: { fontSize: 20, fontWeight: "bold", color: "#333" },
+  modalSubtitle: { fontSize: 14, color: "#888", marginTop: 4, marginBottom: 20 },
+  modalButton: {
+    flexDirection: "row",
+    backgroundColor: "#4A90D9",
+    padding: 14,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
+    marginBottom: 10,
+  },
+  modalDeleteButton: { backgroundColor: "#F44336" },
+  modalButtonText: { color: "#FFF", fontSize: 16, fontWeight: "600", marginLeft: 8 },
+  modalCancel: { marginTop: 6 },
+  modalCancelText: { fontSize: 14, color: "#999" },
 });

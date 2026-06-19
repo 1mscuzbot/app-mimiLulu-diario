@@ -11,11 +11,17 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { addExpense } from "../services/expenseService";
+import { addExpense, todayString, yesterdayString } from "../services/expenseService";
+
+function formatDate(str) {
+  const [y, m, d] = str.split("-");
+  return `${d}/${m}`;
+}
 
 export default function AddExpenseScreen({ user, navigation }) {
   const [item, setItem] = useState("");
   const [value, setValue] = useState("");
+  const [selectedDate, setSelectedDate] = useState(todayString());
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit() {
@@ -33,7 +39,7 @@ export default function AddExpenseScreen({ user, navigation }) {
 
     setLoading(true);
     try {
-      await addExpense(trimmedItem, numericValue, user);
+      await addExpense(trimmedItem, numericValue, user, selectedDate);
       setItem("");
       setValue("");
       navigation.goBack();
@@ -76,6 +82,42 @@ export default function AddExpenseScreen({ user, navigation }) {
             onChangeText={setValue}
             keyboardType="decimal-pad"
           />
+
+          <Text style={styles.dateLabel}>Data do gasto</Text>
+          <View style={styles.dateRow}>
+            <TouchableOpacity
+              style={[
+                styles.dateOption,
+                selectedDate === todayString() && styles.dateOptionActive,
+              ]}
+              onPress={() => setSelectedDate(todayString())}
+            >
+              <Text
+                style={[
+                  styles.dateOptionText,
+                  selectedDate === todayString() && styles.dateOptionTextActive,
+                ]}
+              >
+                Hoje ({formatDate(todayString())})
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.dateOption,
+                selectedDate === yesterdayString() && styles.dateOptionActive,
+              ]}
+              onPress={() => setSelectedDate(yesterdayString())}
+            >
+              <Text
+                style={[
+                  styles.dateOptionText,
+                  selectedDate === yesterdayString() && styles.dateOptionTextActive,
+                ]}
+              >
+                Ontem ({formatDate(yesterdayString())})
+              </Text>
+            </TouchableOpacity>
+          </View>
 
           <Text style={styles.userLabel}>
             Adicionado por: <Text style={styles.userName}>{user}</Text>
@@ -123,6 +165,37 @@ const styles = StyleSheet.create({
     fontSize: 18,
     borderWidth: 1,
     borderColor: "#E8E8E8",
+  },
+  dateLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#666",
+    marginBottom: 6,
+    marginTop: 16,
+  },
+  dateRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  dateOption: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: "#E8E8E8",
+    alignItems: "center",
+  },
+  dateOptionActive: {
+    borderColor: "#E91E63",
+    backgroundColor: "#FFF0F5",
+  },
+  dateOptionText: {
+    fontSize: 14,
+    color: "#888",
+    fontWeight: "600",
+  },
+  dateOptionTextActive: {
+    color: "#E91E63",
   },
   userLabel: {
     fontSize: 14,
