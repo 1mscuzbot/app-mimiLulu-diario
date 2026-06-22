@@ -21,6 +21,12 @@ function formatDate(str) {
 
 export default function AddExpenseScreen({ onClose }) {
   const user = useContext(UserContext);
+  const isLucas = user === "Lucas";
+  const theme = {
+    bg: "#FFFFFF",
+    primary: isLucas ? "#4A90D9" : "#E91E63",
+    primaryLight: isLucas ? "#BBDEFB" : "#FCE4EC",
+  };
   const [item, setItem] = useState("");
   const [value, setValue] = useState("");
   const [selectedDate, setSelectedDate] = useState(todayString());
@@ -53,7 +59,7 @@ export default function AddExpenseScreen({ onClose }) {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.bg }]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.inner}
@@ -90,14 +96,14 @@ export default function AddExpenseScreen({ onClose }) {
             <TouchableOpacity
               style={[
                 styles.dateOption,
-                selectedDate === todayString() && styles.dateOptionActive,
+                selectedDate === todayString() && { backgroundColor: theme.primaryLight, borderColor: theme.primary },
               ]}
               onPress={() => setSelectedDate(todayString())}
             >
               <Text
                 style={[
                   styles.dateOptionText,
-                  selectedDate === todayString() && styles.dateOptionTextActive,
+                  selectedDate === todayString() && { color: theme.primary, fontWeight: "bold" },
                 ]}
               >
                 Hoje ({formatDate(todayString())})
@@ -106,14 +112,14 @@ export default function AddExpenseScreen({ onClose }) {
             <TouchableOpacity
               style={[
                 styles.dateOption,
-                selectedDate === yesterdayString() && styles.dateOptionActive,
+                selectedDate === yesterdayString() && { backgroundColor: theme.primaryLight, borderColor: theme.primary },
               ]}
               onPress={() => setSelectedDate(yesterdayString())}
             >
               <Text
                 style={[
                   styles.dateOptionText,
-                  selectedDate === yesterdayString() && styles.dateOptionTextActive,
+                  selectedDate === yesterdayString() && { color: theme.primary, fontWeight: "bold" },
                 ]}
               >
                 Ontem ({formatDate(yesterdayString())})
@@ -126,7 +132,7 @@ export default function AddExpenseScreen({ onClose }) {
           </Text>
 
           <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
+            style={[styles.button, { backgroundColor: theme.primary }, loading && styles.buttonDisabled]}
             onPress={handleSubmit}
             disabled={loading}
           >

@@ -14,6 +14,12 @@ import { getLimits, setLimits } from "../services/expenseService";
 
 export default function SettingsScreen({ onClose }) {
   const user = useContext(UserContext);
+  const isLucas = user === "Lucas";
+  const theme = {
+    bg: "#FFFFFF",
+    primary: isLucas ? "#4A90D9" : "#E91E63",
+    primaryLight: isLucas ? "#BBDEFB" : "#FCE4EC",
+  };
   const [diario, setDiario] = useState("");
   const [semanal, setSemanal] = useState("");
   const [loading, setLoading] = useState(false);
@@ -48,7 +54,7 @@ export default function SettingsScreen({ onClose }) {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.bg }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={onClose}>
           <Ionicons name="close" size={28} color="#333" />
@@ -76,7 +82,7 @@ export default function SettingsScreen({ onClose }) {
         />
 
         <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
+          style={[styles.button, { backgroundColor: theme.primary }, loading && styles.buttonDisabled]}
           onPress={handleSave}
           disabled={loading}
         >

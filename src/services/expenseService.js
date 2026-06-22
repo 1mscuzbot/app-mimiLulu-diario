@@ -64,6 +64,10 @@ export async function addExpense(item, value, addedBy, customDate) {
   return docRef.id;
 }
 
+export async function updateExpense(expenseId, data) {
+  await updateDoc(doc(db, EXPENSES_COLLECTION, expenseId), data);
+}
+
 export async function updateExpenseDate(expenseId, newDate) {
   await updateDoc(doc(db, EXPENSES_COLLECTION, expenseId), { date: newDate });
 }

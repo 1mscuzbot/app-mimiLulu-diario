@@ -1,12 +1,13 @@
 import { useState, createContext, useContext, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import { NavigationContainer } from "@react-navigation/native";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { Ionicons } from "@expo/vector-icons";
 
 import LoginScreen from "./src/screens/LoginScreen";
 import HomeScreen from "./src/screens/HomeScreen";
 import WeekScreen from "./src/screens/WeekScreen";
+import ShoppingScreen from "./src/screens/ShoppingScreen";
 import {
   subscribeTodayExpenses,
   subscribeWeekExpenses,
@@ -19,29 +20,48 @@ import {
 
 export const UserContext = createContext(null);
 
-const Tab = createBottomTabNavigator();
+const Tab = createMaterialTopTabNavigator();
 
 function HomeTabs({ user, onLogout }) {
+  const isLucas = user === "Lucas";
+  const tabColor = isLucas ? "#4A90D9" : "#E91E63";
+  const tabBg = isLucas ? "#E3F2FD" : "#FFF0F5";
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
+        tabBarIcon: ({ focused, color }) => {
           let iconName;
           if (route.name === "Hoje")
             iconName = focused ? "today" : "today-outline";
           else if (route.name === "Semana")
             iconName = focused ? "calendar" : "calendar-outline";
-          return <Ionicons name={iconName} size={size} color={color} />;
+          else if (route.name === "Compras")
+            iconName = focused ? "cart" : "cart-outline";
+          return <Ionicons name={iconName} size={20} color={color} />;
         },
-        tabBarActiveTintColor: "#E91E63",
+        tabBarActiveTintColor: tabColor,
         tabBarInactiveTintColor: "#999",
-        headerShown: false,
+        tabBarLabelStyle: { fontSize: 12, fontWeight: "600" },
+        tabBarStyle: {
+          backgroundColor: tabBg,
+          elevation: 0,
+          shadowOpacity: 0,
+        },
+        tabBarIndicatorStyle: {
+          backgroundColor: tabColor,
+          height: 3,
+        },
+        tabBarShowIcon: true,
+        swipeEnabled: true,
+        animationEnabled: true,
       })}
     >
       <Tab.Screen name="Hoje">
         {(props) => <HomeScreen {...props} user={user} onLogout={onLogout} />}
       </Tab.Screen>
       <Tab.Screen name="Semana" component={WeekScreen} />
+      <Tab.Screen name="Compras" component={ShoppingScreen} />
     </Tab.Navigator>
   );
 }
