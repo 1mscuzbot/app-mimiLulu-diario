@@ -1,8 +1,9 @@
 import { useState, createContext, useContext, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
+import { View, Text, StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { NavigationContainer } from "@react-navigation/native";
-import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
+import { createMaterialTopTabNavigator, MaterialTopTabBar } from "@react-navigation/material-top-tabs";
 import { Ionicons } from "@expo/vector-icons";
 
 import LoginScreen from "./src/screens/LoginScreen";
@@ -30,6 +31,14 @@ function HomeTabs({ user, onLogout }) {
 
   return (
     <Tab.Navigator
+      tabBar={(props) => (
+        <View>
+          <MaterialTopTabBar {...props} />
+          <View style={styles.swipeHint}>
+            <Text style={styles.swipeHintText}>◀ deslize ▶</Text>
+          </View>
+        </View>
+      )}
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color }) => {
           let iconName;
@@ -113,3 +122,15 @@ export default function App() {
     </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  swipeHint: {
+    alignItems: "center",
+    paddingVertical: 2,
+  },
+  swipeHintText: {
+    fontSize: 10,
+    color: "#999",
+    letterSpacing: 2,
+  },
+});

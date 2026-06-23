@@ -181,4 +181,23 @@ export function getWeekLabel() {
   return `${s} — ${e}`;
 }
 
+export function subscribeDateRangeExpressions(startStr, endStr, callback) {
+  const q = query(
+    collection(db, EXPENSES_COLLECTION),
+    where("date", ">=", startStr),
+    where("date", "<=", endStr)
+  );
+  return listenQuery(q, (expenses) => {
+    expenses.sort((a, b) => {
+      const da = a.date || "";
+      const db2 = b.date || "";
+      if (da !== db2) return db2.localeCompare(da);
+      const ta = a.createdAt?.toMillis?.() || 0;
+      const tb = b.createdAt?.toMillis?.() || 0;
+      return tb - ta;
+    });
+    callback(expenses);
+  });
+}
+
 export { todayString, yesterdayString };

@@ -20,6 +20,7 @@ import {
   subscribeYesterdayExpenses,
   subscribeWeekExpenses,
   subscribeLimits,
+  subscribeDateRangeExpressions,
   updateExpense,
   updateExpenseDate,
   deleteExpense,
@@ -42,6 +43,34 @@ const DAY_NAMES = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
 function formatDate(str) {
   const [y, m, d] = str.split("-");
   return `${d}/${m}`;
+}
+
+function daysAgoStr(n) {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function formatShortDate(str) {
+  const [y, m, d] = str.split("-");
+  const date = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+  const nomes = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
+  return `${nomes[date.getDay()]}, ${d}/${m}`;
+}
+
+function groupByDate(expenses) {
+  const map = {};
+  expenses.forEach((e) => {
+    const key = e.date || "";
+    if (!map[key]) map[key] = [];
+    map[key].push(e);
+  });
+  return Object.entries(map)
+    .sort(([a], [b]) => b.localeCompare(a))
+    .map(([date, items]) => ({ date: formatShortDate(date), items }));
 }
 
 function getRecentDates(daysBack) {
@@ -68,8 +97,12 @@ export default function HomeScreen({ onLogout }) {
   const [weekExpenses, setWeekExpenses] = useState([]);
   const [limits, setLimits] = useState({ diario: 100, semanal: 500 });
   const [shoppingItems, setShoppingItems] = useState([]);
+  const [lastWeekExpenses, setLastWeekExpenses] = useState([]);
+  const [lastMonthExpenses, setLastMonthExpenses] = useState([]);
 
   const [showYesterday, setShowYesterday] = useState(false);
+  const [showLastWeek, setShowLastWeek] = useState(false);
+  const [showLastMonth, setShowLastMonth] = useState(false);
   const [showShopping, setShowShopping] = useState(false);
 
   const [editModal, setEditModal] = useState({ visible: false, expense: null });
@@ -93,12 +126,16 @@ export default function HomeScreen({ onLogout }) {
     const unsubWeek = subscribeWeekExpenses(setWeekExpenses);
     const unsubLimits = subscribeLimits(setLimits);
     const unsubShop = subscribeActiveItems(setShoppingItems);
+    const unsubLastWeek = subscribeDateRangeExpressions(daysAgoStr(7), daysAgoStr(2), setLastWeekExpenses);
+    const unsubLastMonth = subscribeDateRangeExpressions(daysAgoStr(30), daysAgoStr(8), setLastMonthExpenses);
     return () => {
       unsubToday();
       unsubYesterday();
       unsubWeek();
       unsubLimits();
       unsubShop();
+      unsubLastWeek();
+      unsubLastMonth();
     };
   }, []);
 
@@ -373,6 +410,62 @@ export default function HomeScreen({ onLogout }) {
               <Text style={styles.emptyDayText}>Nenhum gasto ontem</Text>
             ) : (
               yesterdayExpenses.map((item) => renderExpenseItem(item))
+            )}
+          </View>
+        )}
+
+        <TouchableOpacity
+          style={styles.sectionToggle}
+          onPress={() => setShowLastWeek(!showLastWeek)}
+        >
+          <Ionicons
+            name={showLastWeek ? "chevron-down" : "chevron-forward"}
+            size={18}
+            color="#888"
+          />
+          <Text style={styles.sectionToggleText}>
+            Últimos 7 dias (R$ {lastWeekExpenses.reduce((s, e) => s + e.value, 0).toFixed(2)})
+          </Text>
+        </TouchableOpacity>
+        {showLastWeek && (
+          <View style={styles.historicalWrap}>
+            {lastWeekExpenses.length === 0 ? (
+              <Text style={styles.emptyDayText}>Nenhum gasto</Text>
+            ) : (
+              groupByDate(lastWeekExpenses).map(({ date, items }) => (
+                <View key={date}>
+                  <Text style={styles.dateGroupLabel}>{date}</Text>
+                  {items.map((item) => renderExpenseItem(item))}
+                </View>
+              ))
+            )}
+          </View>
+        )}
+
+        <TouchableOpacity
+          style={styles.sectionToggle}
+          onPress={() => setShowLastMonth(!showLastMonth)}
+        >
+          <Ionicons
+            name={showLastMonth ? "chevron-down" : "chevron-forward"}
+            size={18}
+            color="#888"
+          />
+          <Text style={styles.sectionToggleText}>
+            Último mês (R$ {lastMonthExpenses.reduce((s, e) => s + e.value, 0).toFixed(2)})
+          </Text>
+        </TouchableOpacity>
+        {showLastMonth && (
+          <View style={styles.historicalWrap}>
+            {lastMonthExpenses.length === 0 ? (
+              <Text style={styles.emptyDayText}>Nenhum gasto</Text>
+            ) : (
+              groupByDate(lastMonthExpenses).map(({ date, items }) => (
+                <View key={date}>
+                  <Text style={styles.dateGroupLabel}>{date}</Text>
+                  {items.map((item) => renderExpenseItem(item))}
+                </View>
+              ))
             )}
           </View>
         )}
@@ -1062,5 +1155,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: "#FFF",
+  },
+  historicalWrap: { paddingLeft: 40, paddingRight: 20, marginBottom: 8 },
+  dateGroupLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#999",
+    marginTop: 8,
+    marginBottom: 4,
   },
 });
