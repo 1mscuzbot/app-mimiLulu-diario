@@ -104,7 +104,7 @@ export default function HomeScreen({ onLogout }) {
 
   async function onRefresh() {
     setRefreshing(true);
-    await new Promise((r) => setTimeout(r, 1500));
+    await new Promise((r) => setTimeout(r, 800));
     setRefreshing(false);
   }
 
@@ -271,6 +271,7 @@ export default function HomeScreen({ onLogout }) {
       <ScrollView
         style={styles.scroll}
         showsVerticalScrollIndicator={false}
+        nestedScrollEnabled
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }

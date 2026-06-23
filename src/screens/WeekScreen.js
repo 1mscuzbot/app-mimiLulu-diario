@@ -90,7 +90,7 @@ export default function WeekScreen() {
 
   async function onRefresh() {
     setRefreshing(true);
-    await new Promise((r) => setTimeout(r, 1500));
+    await new Promise((r) => setTimeout(r, 800));
     setRefreshing(false);
   }
 

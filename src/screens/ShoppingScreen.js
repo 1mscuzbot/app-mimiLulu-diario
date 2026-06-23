@@ -29,7 +29,6 @@ export default function ShoppingScreen() {
   const [editText, setEditText] = useState("");
   const [editQty, setEditQty] = useState("");
   const [refreshing, setRefreshing] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     const unsubActive = subscribeActiveItems(setShoppingItems);
@@ -38,12 +37,11 @@ export default function ShoppingScreen() {
       unsubActive();
       unsubCompleted();
     };
-  }, [refreshKey]);
+  }, []);
 
   async function onRefresh() {
     setRefreshing(true);
-    setRefreshKey((k) => k + 1);
-    await new Promise((r) => setTimeout(r, 1200));
+    await new Promise((r) => setTimeout(r, 800));
     setRefreshing(false);
   }
 
@@ -108,6 +106,7 @@ export default function ShoppingScreen() {
       <ScrollView
         style={styles.list}
         showsVerticalScrollIndicator={false}
+        nestedScrollEnabled
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
