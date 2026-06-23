@@ -1,5 +1,6 @@
 import { useState, createContext, useContext, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { NavigationContainer } from "@react-navigation/native";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { Ionicons } from "@expo/vector-icons";
@@ -102,11 +103,13 @@ export default function App() {
   }
 
   return (
-    <UserContext.Provider value={user}>
-      <NavigationContainer>
-        <StatusBar style="dark" />
-        <HomeTabs user={user} onLogout={() => setUser(null)} />
-      </NavigationContainer>
-    </UserContext.Provider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <UserContext.Provider value={user}>
+        <NavigationContainer>
+          <StatusBar style="dark" />
+          <HomeTabs user={user} onLogout={() => setUser(null)} />
+        </NavigationContainer>
+      </UserContext.Provider>
+    </GestureHandlerRootView>
   );
 }

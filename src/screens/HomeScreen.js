@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Alert,
   ScrollView,
+  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -84,6 +85,7 @@ export default function HomeScreen({ onLogout }) {
   const [shopEditModal, setShopEditModal] = useState({ visible: false, item: null });
   const [shopEditText, setShopEditText] = useState("");
   const [shopEditQty, setShopEditQty] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     const unsubToday = subscribeTodayExpenses(setTodayExpenses);
@@ -99,6 +101,12 @@ export default function HomeScreen({ onLogout }) {
       unsubShop();
     };
   }, []);
+
+  async function onRefresh() {
+    setRefreshing(true);
+    await new Promise((r) => setTimeout(r, 1500));
+    setRefreshing(false);
+  }
 
   const todayTotal = todayExpenses.reduce((s, e) => s + e.value, 0);
   const weekTotal = weekExpenses.reduce((s, e) => s + e.value, 0);
@@ -260,7 +268,13 @@ export default function HomeScreen({ onLogout }) {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.bg }]}>
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         <View style={styles.header}>
           <Text style={styles.greeting}>Olá, {user}!</Text>
           <View style={styles.headerRight}>
