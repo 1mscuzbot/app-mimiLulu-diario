@@ -266,10 +266,13 @@ export default function HomeScreen({ onLogout }) {
           <Text style={styles.greeting}>Olá, {user}!</Text>
           <View style={styles.headerRight}>
             {shoppingItems.length > 0 && (
-              <View style={styles.headerBadgeWrap}>
+              <TouchableOpacity
+                style={styles.headerBadgeWrap}
+                onPress={() => navigation.navigate("Lista")}
+              >
                 <Ionicons name="cart-outline" size={22} color="#E91E63" />
                 <Text style={[styles.headerBadge, { color: theme.primary, backgroundColor: theme.primaryLight }]}>{shoppingItems.length}</Text>
-              </View>
+              </TouchableOpacity>
             )}
             <TouchableOpacity
               style={styles.headerBtn}
@@ -285,7 +288,7 @@ export default function HomeScreen({ onLogout }) {
 
         <TouchableOpacity
           style={[styles.summaryCard, isOverLimit && styles.cardOverLimit]}
-          onPress={() => navigation.navigate("Semana")}
+          onPress={() => navigation.navigate("Histórico")}
           activeOpacity={0.8}
         >
           <View style={styles.summaryTop}>
@@ -342,38 +345,38 @@ export default function HomeScreen({ onLogout }) {
 
         <View style={styles.historicalRow}>
           <TouchableOpacity
-            style={[styles.historicalCard, showYesterday && styles.historicalCardActive]}
+            style={[styles.historicalCard, showYesterday && { borderColor: theme.primary, backgroundColor: theme.primaryLight }]}
             onPress={() => setShowYesterday(!showYesterday)}
           >
             <Text style={styles.historicalCardTitle}>Ontem</Text>
-            <Text style={styles.historicalCardValue}>
+            <Text style={[styles.historicalCardValue, showYesterday && { color: theme.primary }]}>
               R$ {yesterdayExpenses.reduce((s, e) => s + e.value, 0).toFixed(2)}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.historicalCard, showLastWeek && styles.historicalCardActive]}
+            style={[styles.historicalCard, showLastWeek && { borderColor: theme.primary, backgroundColor: theme.primaryLight }]}
             onPress={() => setShowLastWeek(!showLastWeek)}
           >
             <Text style={styles.historicalCardTitle}>7 dias</Text>
-            <Text style={styles.historicalCardValue}>
+            <Text style={[styles.historicalCardValue, showLastWeek && { color: theme.primary }]}>
               R$ {lastWeekExpenses.reduce((s, e) => s + e.value, 0).toFixed(2)}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.historicalCard, showPrevWeek && styles.historicalCardActive]}
+            style={[styles.historicalCard, showPrevWeek && { borderColor: theme.primary, backgroundColor: theme.primaryLight }]}
             onPress={() => setShowPrevWeek(!showPrevWeek)}
           >
             <Text style={styles.historicalCardTitle}>Semana</Text>
-            <Text style={styles.historicalCardValue}>
+            <Text style={[styles.historicalCardValue, showPrevWeek && { color: theme.primary }]}>
               R$ {prevWeekExpenses.reduce((s, e) => s + e.value, 0).toFixed(2)}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.historicalCard, showLastMonth && styles.historicalCardActive]}
+            style={[styles.historicalCard, showLastMonth && { borderColor: theme.primary, backgroundColor: theme.primaryLight }]}
             onPress={() => setShowLastMonth(!showLastMonth)}
           >
             <Text style={styles.historicalCardTitle}>Mês</Text>
-            <Text style={styles.historicalCardValue}>
+            <Text style={[styles.historicalCardValue, showLastMonth && { color: theme.primary }]}>
               R$ {lastMonthExpenses.reduce((s, e) => s + e.value, 0).toFixed(2)}
             </Text>
           </TouchableOpacity>
@@ -436,7 +439,7 @@ export default function HomeScreen({ onLogout }) {
 
         <TouchableOpacity
           style={[styles.summaryCard, styles.weekCard, isWeekOverLimit && styles.cardOverLimit]}
-          onPress={() => navigation.navigate("Semana")}
+          onPress={() => navigation.navigate("Histórico")}
           activeOpacity={0.8}
         >
           <Text style={[styles.summaryTitle, isWeekOverLimit && styles.textOverLimit]}>Semana ({getWeekLabel()})</Text>
@@ -1128,10 +1131,6 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     borderWidth: 1,
     borderColor: "#F0F0F0",
-  },
-  historicalCardActive: {
-    borderColor: "#4A90D9",
-    backgroundColor: "#F0F7FF",
   },
   historicalCardTitle: {
     fontSize: 11,

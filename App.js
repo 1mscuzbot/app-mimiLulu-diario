@@ -39,11 +39,11 @@ function HomeTabs({ user, onLogout }) {
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color }) => {
           let iconName;
-          if (route.name === "Hoje")
-            iconName = focused ? "today" : "today-outline";
-          else if (route.name === "Semana")
+          if (route.name === "Início")
+            iconName = focused ? "home" : "home-outline";
+          else if (route.name === "Histórico")
             iconName = focused ? "calendar" : "calendar-outline";
-          else if (route.name === "Compras")
+          else if (route.name === "Lista")
             iconName = focused ? "cart" : "cart-outline";
           return <Ionicons name={iconName} size={20} color={color} />;
         },
@@ -72,11 +72,11 @@ function HomeTabs({ user, onLogout }) {
         animationEnabled: true,
       })}
     >
-      <Tab.Screen name="Hoje">
+      <Tab.Screen name="Início">
         {(props) => <HomeScreen {...props} user={user} onLogout={onLogout} />}
       </Tab.Screen>
-      <Tab.Screen name="Semana" component={WeekScreen} />
-      <Tab.Screen name="Compras" component={ShoppingScreen} />
+      <Tab.Screen name="Histórico" component={WeekScreen} />
+      <Tab.Screen name="Lista" component={ShoppingScreen} />
     </Tab.Navigator>
   );
 }
