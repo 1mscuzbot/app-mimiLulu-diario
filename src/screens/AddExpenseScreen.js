@@ -8,13 +8,14 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { UserContext } from "../../App";
 import { addExpense, todayString, yesterdayString } from "../services/expenseService";
 import { getTheme } from "../utils/theme";
-import { formatDate } from "../utils/format";
+import { formatDate, getRecentDates } from "../utils/format";
 
 export default function AddExpenseScreen({ onClose }) {
   const user = useContext(UserContext);
@@ -22,6 +23,7 @@ export default function AddExpenseScreen({ onClose }) {
   const [item, setItem] = useState("");
   const [value, setValue] = useState("");
   const [selectedDate, setSelectedDate] = useState(todayString());
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit() {
@@ -84,40 +86,93 @@ export default function AddExpenseScreen({ onClose }) {
           />
 
           <Text style={styles.dateLabel}>Data do gasto</Text>
-          <View style={styles.dateRow}>
-            <TouchableOpacity
-              style={[
-                styles.dateOption,
-                selectedDate === todayString() && { backgroundColor: theme.primaryLight, borderColor: theme.primary },
-              ]}
-              onPress={() => setSelectedDate(todayString())}
-            >
-              <Text
+          {!showDatePicker ? (
+            <View style={styles.dateRow}>
+              <TouchableOpacity
                 style={[
-                  styles.dateOptionText,
-                  selectedDate === todayString() && { color: theme.primary, fontWeight: "bold" },
+                  styles.dateOption,
+                  selectedDate === todayString() && { backgroundColor: theme.primaryLight, borderColor: theme.primary },
                 ]}
+                onPress={() => setSelectedDate(todayString())}
               >
-                Hoje ({formatDate(todayString())})
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.dateOption,
-                selectedDate === yesterdayString() && { backgroundColor: theme.primaryLight, borderColor: theme.primary },
-              ]}
-              onPress={() => setSelectedDate(yesterdayString())}
-            >
-              <Text
+                <Text
+                  style={[
+                    styles.dateOptionText,
+                    selectedDate === todayString() && { color: theme.primary, fontWeight: "bold" },
+                  ]}
+                >
+                  Hoje ({formatDate(todayString())})
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
                 style={[
-                  styles.dateOptionText,
-                  selectedDate === yesterdayString() && { color: theme.primary, fontWeight: "bold" },
+                  styles.dateOption,
+                  selectedDate === yesterdayString() && { backgroundColor: theme.primaryLight, borderColor: theme.primary },
                 ]}
+                onPress={() => setSelectedDate(yesterdayString())}
               >
-                Ontem ({formatDate(yesterdayString())})
-              </Text>
-            </TouchableOpacity>
-          </View>
+                <Text
+                  style={[
+                    styles.dateOptionText,
+                    selectedDate === yesterdayString() && { color: theme.primary, fontWeight: "bold" },
+                  ]}
+                >
+                  Ontem ({formatDate(yesterdayString())})
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.dateOption,
+                  { borderStyle: "dashed" },
+                  selectedDate !== todayString() && selectedDate !== yesterdayString() && { backgroundColor: theme.primaryLight, borderColor: theme.primary },
+                ]}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <Text
+                  style={[
+                    styles.dateOptionText,
+                    selectedDate !== todayString() && selectedDate !== yesterdayString() && { color: theme.primary, fontWeight: "bold" },
+                  ]}
+                >
+                  Outro dia...
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <>
+              <ScrollView style={styles.datePickerList}>
+                {getRecentDates(13).map((d) => (
+                  <TouchableOpacity
+                    key={d.str}
+                    style={[
+                      styles.datePickerItem,
+                      selectedDate === d.str && { backgroundColor: theme.primaryLight },
+                    ]}
+                    onPress={() => {
+                      setSelectedDate(d.str);
+                      setShowDatePicker(false);
+                    }}
+                  >
+                    <Text style={[
+                      styles.datePickerText,
+                      selectedDate === d.str && { color: theme.primary, fontWeight: "bold" },
+                    ]}>
+                      {d.label}
+                    </Text>
+                    {selectedDate === d.str && (
+                      <Ionicons name="checkmark" size={20} color={theme.primary} />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+              <TouchableOpacity
+                style={styles.datePickerCancel}
+                onPress={() => setShowDatePicker(false)}
+              >
+                <Text style={styles.datePickerCancelText}>Voltar</Text>
+              </TouchableOpacity>
+            </>
+          )}
 
           <Text style={styles.userLabel}>
             Adicionado por: <Text style={styles.userName}>{user}</Text>
@@ -197,6 +252,18 @@ const styles = StyleSheet.create({
   dateOptionTextActive: {
     color: "#E91E63",
   },
+  datePickerList: { maxHeight: 200, marginBottom: 8 },
+  datePickerItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 14,
+    borderRadius: 10,
+    marginBottom: 4,
+  },
+  datePickerText: { fontSize: 15, color: "#333" },
+  datePickerCancel: { alignItems: "center", padding: 8 },
+  datePickerCancelText: { fontSize: 14, color: "#999" },
   userLabel: {
     fontSize: 14,
     color: "#888",

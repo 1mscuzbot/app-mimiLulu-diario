@@ -89,8 +89,7 @@ export default function ShoppingScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: theme.bg }]}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Lista de Compras</Text>
@@ -103,6 +102,7 @@ export default function ShoppingScreen() {
         style={styles.list}
         showsVerticalScrollIndicator={false}
         nestedScrollEnabled
+        keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }

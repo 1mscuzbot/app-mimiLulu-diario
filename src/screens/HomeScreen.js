@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useRef } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   Alert,
   ScrollView,
   RefreshControl,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -79,6 +81,12 @@ export default function HomeScreen({ onLogout }) {
   const [shopEditText, setShopEditText] = useState("");
   const [shopEditQty, setShopEditQty] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const shopInputRef = useRef(null);
+
+  function toggleShopping(open) {
+    setShowShopping(open);
+    if (open) setTimeout(() => shopInputRef.current?.focus(), 300);
+  }
 
   const todayTotal = todayExpenses.reduce((s, e) => s + e.value, 0);
   const weekTotal = weekExpenses.reduce((s, e) => s + e.value, 0);
@@ -246,10 +254,16 @@ export default function HomeScreen({ onLogout }) {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.bg }]}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+      >
       <ScrollView
         style={styles.scroll}
         showsVerticalScrollIndicator={false}
         nestedScrollEnabled
+        keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -441,7 +455,7 @@ export default function HomeScreen({ onLogout }) {
         </View>
         <TouchableOpacity
           style={styles.shoppingToggle}
-          onPress={() => setShowShopping(!showShopping)}
+          onPress={() => toggleShopping(!showShopping)}
         >
           <View style={styles.shoppingToggleLeft}>
             <Ionicons
@@ -456,16 +470,17 @@ export default function HomeScreen({ onLogout }) {
           <View style={styles.shoppingToggleRight}>
             <TouchableOpacity
               style={styles.shopAddBtnBig}
-              onPress={() => setShowShopping(true)}
+              onPress={() => toggleShopping(true)}
             >
               <Ionicons name="add" size={28} color="#FFF" />
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
-        {showShopping && (
+          {showShopping && (
           <View style={styles.collapsibleContent}>
             <View style={styles.addShopRow}>
               <TextInput
+                ref={shopInputRef}
                 style={styles.shopInput}
                 placeholder="Item..."
                 value={newItemText}
@@ -548,6 +563,7 @@ export default function HomeScreen({ onLogout }) {
           <Text style={styles.addExpenseBarText}>Nova Despesa</Text>
         </TouchableOpacity>
       </View>
+      </KeyboardAvoidingView>
 
       <Modal
         visible={editModal.visible}
