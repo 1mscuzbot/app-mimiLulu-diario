@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   Alert,
   ScrollView,
-  RefreshControl,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
@@ -80,7 +79,6 @@ export default function HomeScreen({ onLogout }) {
   const [shopEditModal, setShopEditModal] = useState({ visible: false, item: null });
   const [shopEditText, setShopEditText] = useState("");
   const [shopEditQty, setShopEditQty] = useState("");
-  const [refreshing, setRefreshing] = useState(false);
   const shopInputRef = useRef(null);
 
   function toggleShopping(open) {
@@ -116,12 +114,6 @@ export default function HomeScreen({ onLogout }) {
       unsubLastMonth();
     };
   }, []);
-
-  async function onRefresh() {
-    setRefreshing(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setRefreshing(false);
-  }
 
   async function handleMoveDate(expenseId, dateStr) {
     try {
@@ -264,9 +256,6 @@ export default function HomeScreen({ onLogout }) {
         showsVerticalScrollIndicator={false}
         nestedScrollEnabled
         keyboardShouldPersistTaps="handled"
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
       >
         <View style={styles.header}>
           <Text style={styles.greeting}>Olá, {user}!</Text>

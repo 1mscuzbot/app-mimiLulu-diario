@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from "react";
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ScrollView, Modal, KeyboardAvoidingView, Platform, RefreshControl } from "react-native";
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ScrollView, Modal, KeyboardAvoidingView, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { UserContext } from "../../App";
@@ -24,7 +24,6 @@ export default function ShoppingScreen() {
   const [editModal, setEditModal] = useState({ visible: false, item: null });
   const [editText, setEditText] = useState("");
   const [editQty, setEditQty] = useState("");
-  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     const unsubActive = subscribeActiveItems(setShoppingItems);
@@ -34,12 +33,6 @@ export default function ShoppingScreen() {
       unsubCompleted();
     };
   }, []);
-
-  async function onRefresh() {
-    setRefreshing(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setRefreshing(false);
-  }
 
   async function handleAdd() {
     const text = newItemText.trim();
@@ -103,9 +96,6 @@ export default function ShoppingScreen() {
         showsVerticalScrollIndicator={false}
         nestedScrollEnabled
         keyboardShouldPersistTaps="handled"
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
       >
         {[...shoppingItems].reverse().map((item) => (
           <View key={item.id} style={styles.item}>

@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   Alert,
   SectionList,
-  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -35,7 +34,6 @@ export default function WeekScreen() {
   const [editExpenseValue, setEditExpenseValue] = useState("");
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [expandedDays, setExpandedDays] = useState({});
-  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     const unsubExpenses = subscribeWeekExpenses(setWeekExpenses);
@@ -45,12 +43,6 @@ export default function WeekScreen() {
       unsubLimits();
     };
   }, []);
-
-  async function onRefresh() {
-    setRefreshing(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setRefreshing(false);
-  }
 
   const now = new Date();
   const dayOfWeek = now.getDay();
@@ -260,9 +252,6 @@ export default function WeekScreen() {
         style={styles.list}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
       />
 
       <Modal
