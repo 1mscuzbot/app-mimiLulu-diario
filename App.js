@@ -1,6 +1,6 @@
 import { useState, createContext, useContext, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { NavigationContainer } from "@react-navigation/native";
 import { createMaterialTopTabNavigator, MaterialTopTabBar } from "@react-navigation/material-top-tabs";
@@ -34,9 +34,6 @@ function HomeTabs({ user, onLogout }) {
       tabBar={(props) => (
         <View>
           <MaterialTopTabBar {...props} />
-          <View style={styles.swipeHint}>
-            <Text style={styles.swipeHintText}>◀ deslize ▶</Text>
-          </View>
         </View>
       )}
       screenOptions={({ route }) => ({
@@ -52,17 +49,25 @@ function HomeTabs({ user, onLogout }) {
         },
         tabBarActiveTintColor: tabColor,
         tabBarInactiveTintColor: "#999",
-        tabBarLabelStyle: { fontSize: 12, fontWeight: "600" },
+        tabBarLabelStyle: { fontSize: 12, fontWeight: "700" },
         tabBarStyle: {
           backgroundColor: tabBg,
-          elevation: 0,
-          shadowOpacity: 0,
+          elevation: 2,
+          shadowOpacity: 0.1,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowRadius: 4,
+          height: 64,
+          paddingBottom: 6,
+          paddingTop: 6,
         },
         tabBarIndicatorStyle: {
           backgroundColor: tabColor,
           height: 3,
+          borderRadius: 2,
         },
         tabBarShowIcon: true,
+        tabBarShowLabel: true,
         swipeEnabled: true,
         animationEnabled: true,
       })}
@@ -123,14 +128,4 @@ export default function App() {
   );
 }
 
-const styles = StyleSheet.create({
-  swipeHint: {
-    alignItems: "center",
-    paddingVertical: 2,
-  },
-  swipeHintText: {
-    fontSize: 10,
-    color: "#999",
-    letterSpacing: 2,
-  },
-});
+const styles = StyleSheet.create({});

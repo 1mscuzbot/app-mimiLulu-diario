@@ -46,6 +46,7 @@ import {
   getRecentDates,
   getWeekLabel,
   getBarColor,
+  getLastWeekRange,
 } from "../utils/format";
 
 export default function HomeScreen({ onLogout }) {
@@ -59,10 +60,12 @@ export default function HomeScreen({ onLogout }) {
   const [limits, setLimits] = useState({ diario: 100, semanal: 500 });
   const [shoppingItems, setShoppingItems] = useState([]);
   const [lastWeekExpenses, setLastWeekExpenses] = useState([]);
+  const [prevWeekExpenses, setPrevWeekExpenses] = useState([]);
   const [lastMonthExpenses, setLastMonthExpenses] = useState([]);
 
   const [showYesterday, setShowYesterday] = useState(false);
   const [showLastWeek, setShowLastWeek] = useState(false);
+  const [showPrevWeek, setShowPrevWeek] = useState(false);
   const [showLastMonth, setShowLastMonth] = useState(false);
   const [showShopping, setShowShopping] = useState(false);
 
@@ -103,6 +106,8 @@ export default function HomeScreen({ onLogout }) {
     const unsubLimits = subscribeLimits(setLimits);
     const unsubShop = subscribeActiveItems(setShoppingItems);
     const unsubLastWeek = subscribeDateRangeExpressions(daysAgoStr(7), daysAgoStr(2), setLastWeekExpenses);
+    const lwr = getLastWeekRange();
+    const unsubPrevWeek = subscribeDateRangeExpressions(lwr.start, lwr.end, setPrevWeekExpenses);
     const unsubLastMonth = subscribeDateRangeExpressions(daysAgoStr(30), daysAgoStr(8), setLastMonthExpenses);
     return () => {
       unsubToday();
@@ -111,6 +116,7 @@ export default function HomeScreen({ onLogout }) {
       unsubLimits();
       unsubShop();
       unsubLastWeek();
+      unsubPrevWeek();
       unsubLastMonth();
     };
   }, []);
@@ -334,21 +340,47 @@ export default function HomeScreen({ onLogout }) {
           todayExpenses.map((item) => renderExpenseItem(item))
         )}
 
-        <TouchableOpacity
-          style={styles.sectionToggle}
-          onPress={() => setShowYesterday(!showYesterday)}
-        >
-          <Ionicons
-            name={showYesterday ? "chevron-down" : "chevron-forward"}
-            size={18}
-            color="#888"
-          />
-          <Text style={styles.sectionToggleText}>
-            Gastos de ontem (R$ {yesterdayExpenses.reduce((s, e) => s + e.value, 0).toFixed(2)})
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.historicalRow}>
+          <TouchableOpacity
+            style={[styles.historicalCard, showYesterday && styles.historicalCardActive]}
+            onPress={() => setShowYesterday(!showYesterday)}
+          >
+            <Text style={styles.historicalCardTitle}>Ontem</Text>
+            <Text style={styles.historicalCardValue}>
+              R$ {yesterdayExpenses.reduce((s, e) => s + e.value, 0).toFixed(2)}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.historicalCard, showLastWeek && styles.historicalCardActive]}
+            onPress={() => setShowLastWeek(!showLastWeek)}
+          >
+            <Text style={styles.historicalCardTitle}>7 dias</Text>
+            <Text style={styles.historicalCardValue}>
+              R$ {lastWeekExpenses.reduce((s, e) => s + e.value, 0).toFixed(2)}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.historicalCard, showPrevWeek && styles.historicalCardActive]}
+            onPress={() => setShowPrevWeek(!showPrevWeek)}
+          >
+            <Text style={styles.historicalCardTitle}>Semana</Text>
+            <Text style={styles.historicalCardValue}>
+              R$ {prevWeekExpenses.reduce((s, e) => s + e.value, 0).toFixed(2)}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.historicalCard, showLastMonth && styles.historicalCardActive]}
+            onPress={() => setShowLastMonth(!showLastMonth)}
+          >
+            <Text style={styles.historicalCardTitle}>Mês</Text>
+            <Text style={styles.historicalCardValue}>
+              R$ {lastMonthExpenses.reduce((s, e) => s + e.value, 0).toFixed(2)}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         {showYesterday && (
-          <View style={styles.yesterdayWrap}>
+          <View style={styles.historicalWrap}>
             {yesterdayExpenses.length === 0 ? (
               <Text style={styles.emptyDayText}>Nenhum gasto ontem</Text>
             ) : (
@@ -357,19 +389,6 @@ export default function HomeScreen({ onLogout }) {
           </View>
         )}
 
-        <TouchableOpacity
-          style={styles.sectionToggle}
-          onPress={() => setShowLastWeek(!showLastWeek)}
-        >
-          <Ionicons
-            name={showLastWeek ? "chevron-down" : "chevron-forward"}
-            size={18}
-            color="#888"
-          />
-          <Text style={styles.sectionToggleText}>
-            Últimos 7 dias (R$ {lastWeekExpenses.reduce((s, e) => s + e.value, 0).toFixed(2)})
-          </Text>
-        </TouchableOpacity>
         {showLastWeek && (
           <View style={styles.historicalWrap}>
             {lastWeekExpenses.length === 0 ? (
@@ -385,19 +404,21 @@ export default function HomeScreen({ onLogout }) {
           </View>
         )}
 
-        <TouchableOpacity
-          style={styles.sectionToggle}
-          onPress={() => setShowLastMonth(!showLastMonth)}
-        >
-          <Ionicons
-            name={showLastMonth ? "chevron-down" : "chevron-forward"}
-            size={18}
-            color="#888"
-          />
-          <Text style={styles.sectionToggleText}>
-            Último mês (R$ {lastMonthExpenses.reduce((s, e) => s + e.value, 0).toFixed(2)})
-          </Text>
-        </TouchableOpacity>
+        {showPrevWeek && (
+          <View style={styles.historicalWrap}>
+            {prevWeekExpenses.length === 0 ? (
+              <Text style={styles.emptyDayText}>Nenhum gasto</Text>
+            ) : (
+              groupByDate(prevWeekExpenses).map(({ date, items }) => (
+                <View key={date}>
+                  <Text style={styles.dateGroupLabel}>{date}</Text>
+                  {items.map((item) => renderExpenseItem(item))}
+                </View>
+              ))
+            )}
+          </View>
+        )}
+
         {showLastMonth && (
           <View style={styles.historicalWrap}>
             {lastMonthExpenses.length === 0 ? (
@@ -796,22 +817,7 @@ const styles = StyleSheet.create({
   barFill: { height: "100%", borderRadius: 4 },
   byPerson: { marginTop: 8 },
   byPersonText: { fontSize: 13, color: "#888" },
-  sectionToggle: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "flex-end",
-    paddingHorizontal: 22,
-    paddingVertical: 8,
-    marginTop: 4,
-  },
-  sectionToggleText: {
-    fontSize: 14,
-    color: "#888",
-    fontWeight: "600",
-    marginLeft: 6,
-  },
   collapsibleContent: { paddingHorizontal: 20, marginBottom: 8 },
-  yesterdayWrap: { paddingLeft: 40, paddingRight: 20, marginBottom: 8 },
   shoppingHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -1101,7 +1107,43 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#FFF",
   },
-  historicalWrap: { paddingLeft: 40, paddingRight: 20, marginBottom: 8 },
+  historicalWrap: { paddingHorizontal: 20, marginBottom: 8 },
+  historicalRow: {
+    flexDirection: "row",
+    gap: 8,
+    paddingHorizontal: 20,
+    marginBottom: 8,
+    marginTop: 4,
+  },
+  historicalCard: {
+    flex: 1,
+    backgroundColor: "#FFF",
+    borderRadius: 12,
+    padding: 10,
+    alignItems: "center",
+    elevation: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
+  },
+  historicalCardActive: {
+    borderColor: "#4A90D9",
+    backgroundColor: "#F0F7FF",
+  },
+  historicalCardTitle: {
+    fontSize: 11,
+    color: "#888",
+    fontWeight: "600",
+    marginBottom: 2,
+  },
+  historicalCardValue: {
+    fontSize: 13,
+    fontWeight: "bold",
+    color: "#333",
+  },
   dateGroupLabel: {
     fontSize: 12,
     fontWeight: "600",

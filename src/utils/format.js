@@ -68,6 +68,21 @@ export function getWeekLabel() {
   return `${s} — ${e}`;
 }
 
+export function getLastWeekRange() {
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  const lastSunday = new Date(now);
+  lastSunday.setDate(now.getDate() - dayOfWeek - 7);
+  lastSunday.setHours(0, 0, 0, 0);
+  const lastSaturday = new Date(lastSunday);
+  lastSaturday.setDate(lastSunday.getDate() + 6);
+  return {
+    start: toDateStr(lastSunday),
+    end: toDateStr(lastSaturday),
+    label: `${formatDateObj(lastSunday)} — ${formatDateObj(lastSaturday)}`,
+  };
+}
+
 export function groupByDate(expenses) {
   const map = {};
   expenses.forEach((e) => {
