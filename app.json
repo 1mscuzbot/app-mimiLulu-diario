@@ -23,14 +23,15 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#E91E63"
       },
-      "package": "com.mimilulu.diario"
+      "package": "com.mimilulu.diario",
+      "versionCode": 1
     },
     "plugins": [
       [
         "expo-notifications",
         {
           "icon": "./assets/notification-icon.png",
-          "color": "#FF6B9D"
+          "color": "#E91E63"
         }
       ],
       "expo-asset"
