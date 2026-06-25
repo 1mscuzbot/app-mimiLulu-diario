@@ -24,7 +24,6 @@ import {
   updateExpense,
   updateExpenseDate,
   deleteExpense,
-  getWeekLabel,
   todayString,
   yesterdayString,
 } from "../services/expenseService";
@@ -37,61 +36,22 @@ import {
 } from "../services/shoppingService";
 import AddExpenseScreen from "./AddExpenseScreen";
 import SettingsScreen from "./SettingsScreen";
-
-const DAY_NAMES = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
-
-function formatDate(str) {
-  const [y, m, d] = str.split("-");
-  return `${d}/${m}`;
-}
-
-function daysAgoStr(n) {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-function formatShortDate(str) {
-  const [y, m, d] = str.split("-");
-  const date = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
-  const nomes = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
-  return `${nomes[date.getDay()]}, ${d}/${m}`;
-}
-
-function groupByDate(expenses) {
-  const map = {};
-  expenses.forEach((e) => {
-    const key = e.date || "";
-    if (!map[key]) map[key] = [];
-    map[key].push(e);
-  });
-  return Object.entries(map)
-    .sort(([a], [b]) => b.localeCompare(a))
-    .map(([date, items]) => ({ date: formatShortDate(date), items }));
-}
-
-function getRecentDates(daysBack) {
-  const dates = [];
-  const today = new Date();
-  for (let i = 0; i <= daysBack; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - i);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    const str = `${year}-${month}-${day}`;
-    const dayName = i === 0 ? "Hoje" : i === 1 ? "Ontem" : DAY_NAMES[d.getDay()];
-    dates.push({ str, label: `${dayName}, ${formatDate(str)}` });
-  }
-  return dates;
-}
+import { getTheme } from "../utils/theme";
+import {
+  formatDate,
+  daysAgoStr,
+  formatShortDate,
+  groupByDate,
+  getRecentDates,
+  getWeekLabel,
+  getBarColor,
+} from "../utils/format";
 
 export default function HomeScreen({ onLogout }) {
   const navigation = useNavigation();
   const user = useContext(UserContext);
+  const theme = getTheme(user);
+
   const [todayExpenses, setTodayExpenses] = useState([]);
   const [yesterdayExpenses, setYesterdayExpenses] = useState([]);
   const [weekExpenses, setWeekExpenses] = useState([]);
@@ -120,6 +80,16 @@ export default function HomeScreen({ onLogout }) {
   const [shopEditQty, setShopEditQty] = useState("");
   const [refreshing, setRefreshing] = useState(false);
 
+  const todayTotal = todayExpenses.reduce((s, e) => s + e.value, 0);
+  const weekTotal = weekExpenses.reduce((s, e) => s + e.value, 0);
+
+  const todayRaw = (todayTotal / limits.diario) * 100;
+  const weekRaw = (weekTotal / limits.semanal) * 100;
+  const todayPercent = Math.min(todayRaw, 100);
+  const weekPercent = Math.min(weekRaw, 100);
+  const isOverLimit = todayRaw >= 100;
+  const isWeekOverLimit = weekRaw >= 100;
+
   useEffect(() => {
     const unsubToday = subscribeTodayExpenses(setTodayExpenses);
     const unsubYesterday = subscribeYesterdayExpenses(setYesterdayExpenses);
@@ -144,29 +114,6 @@ export default function HomeScreen({ onLogout }) {
     await new Promise((r) => setTimeout(r, 800));
     setRefreshing(false);
   }
-
-  const todayTotal = todayExpenses.reduce((s, e) => s + e.value, 0);
-  const weekTotal = weekExpenses.reduce((s, e) => s + e.value, 0);
-  const isLucasUser = user === "Lucas";
-  const theme = {
-    bg: "#FFFFFF",
-    primary: isLucasUser ? "#4A90D9" : "#E91E63",
-    primaryLight: isLucasUser ? "#BBDEFB" : "#FCE4EC",
-    primaryDark: isLucasUser ? "#1565C0" : "#C2185B",
-  };
-  const isOverLimit = todayRaw >= 100;
-  const isWeekOverLimit = weekRaw >= 100;
-
-  const todayRaw = (todayTotal / limits.diario) * 100;
-  const weekRaw = (weekTotal / limits.semanal) * 100;
-  const todayPercent = Math.min(todayRaw, 100);
-  const weekPercent = Math.min(weekRaw, 100);
-
-  const getBarColor = (percent) => {
-    if (percent >= 100) return "#F44336";
-    if (percent >= 70) return "#FF9800";
-    return "#4CAF50";
-  };
 
   async function handleMoveDate(expenseId, dateStr) {
     try {
@@ -228,12 +175,6 @@ export default function HomeScreen({ onLogout }) {
   }
 
   function openShopEdit(item) {
-    setShopEditText(item.item);
-    setShopEditQty(item.quantidade || "");
-    setShopEditModal({ visible: true, item });
-  }
-
-  function openShopQtyEdit(item) {
     setShopEditText(item.item);
     setShopEditQty(item.quantidade || "");
     setShopEditModal({ visible: true, item });

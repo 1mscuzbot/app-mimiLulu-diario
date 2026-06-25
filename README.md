@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-# app-mimiLulu-diario
-App de controle de gastos diários/semanais para Mimi &amp; Lulu
-=======
 # Mimi & Lulu - Diário de Gastos
 
 App para o casal acompanhar os gastos diários e semanais em tempo real.
@@ -116,4 +112,3 @@ app-mimiLulu-diario/
 │       └── notifications.js    # Notificações push/locais
 └── assets/
 ```
->>>>>>> 5a2dcb7 (Initial commit: app de gastos Mimi & Lulu)

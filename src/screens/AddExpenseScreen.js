@@ -13,20 +13,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { UserContext } from "../../App";
 import { addExpense, todayString, yesterdayString } from "../services/expenseService";
-
-function formatDate(str) {
-  const [y, m, d] = str.split("-");
-  return `${d}/${m}`;
-}
+import { getTheme } from "../utils/theme";
+import { formatDate } from "../utils/format";
 
 export default function AddExpenseScreen({ onClose }) {
   const user = useContext(UserContext);
-  const isLucas = user === "Lucas";
-  const theme = {
-    bg: "#FFFFFF",
-    primary: isLucas ? "#4A90D9" : "#E91E63",
-    primaryLight: isLucas ? "#BBDEFB" : "#FCE4EC",
-  };
+  const theme = getTheme(user);
   const [item, setItem] = useState("");
   const [value, setValue] = useState("");
   const [selectedDate, setSelectedDate] = useState(todayString());

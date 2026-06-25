@@ -11,15 +11,11 @@ import {
   subscribeActiveItems,
   subscribeCompletedItems,
 } from "../services/shoppingService";
+import { getTheme } from "../utils/theme";
 
 export default function ShoppingScreen() {
   const user = useContext(UserContext);
-  const isLucasUser = user === "Lucas";
-  const theme = {
-    bg: "#FFFFFF",
-    primary: isLucasUser ? "#4A90D9" : "#E91E63",
-    primaryLight: isLucasUser ? "#BBDEFB" : "#FCE4EC",
-  };
+  const theme = getTheme(user);
   const [shoppingItems, setShoppingItems] = useState([]);
   const [completedItems, setCompletedItems] = useState([]);
   const [newItemText, setNewItemText] = useState("");

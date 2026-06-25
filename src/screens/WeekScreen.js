@@ -16,60 +16,18 @@ import { UserContext } from "../../App";
 import LongPressItem from "../components/LongPressItem";
 import {
   subscribeWeekExpenses,
-  getWeekLabel,
   updateExpense,
   updateExpenseDate,
   deleteExpense,
-  todayString,
-  yesterdayString,
   subscribeLimits,
 } from "../services/expenseService";
-
-const DAY_NAMES = [
-  "Domingo",
-  "Segunda",
-  "Terça",
-  "Quarta",
-  "Quinta",
-  "Sexta",
-  "Sábado",
-];
-
-function getDaysInWeek() {
-  const now = new Date();
-  const dayOfWeek = now.getDay();
-  const diff = dayOfWeek === 0 ? 0 : -dayOfWeek;
-  const sunday = new Date(now);
-  sunday.setDate(now.getDate() + diff);
-
-  const days = [];
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(sunday);
-    d.setDate(sunday.getDate() + i);
-    days.push(d);
-  }
-  return days;
-}
-
-function dateKey(d) {
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function formatDate(d) {
-  return `${d.getDate().toString().padStart(2, "0")}/${(d.getMonth() + 1).toString().padStart(2, "0")}`;
-}
+import { getTheme } from "../utils/theme";
+import { DAY_NAMES } from "../utils/constants";
+import { toDateStr, formatDateObj, getWeekLabel } from "../utils/format";
 
 export default function WeekScreen() {
   const user = useContext(UserContext);
-  const isLucasUser = user === "Lucas";
-  const theme = {
-    bg: "#FFFFFF",
-    primary: isLucasUser ? "#4A90D9" : "#E91E63",
-    primaryLight: isLucasUser ? "#BBDEFB" : "#FCE4EC",
-  };
+  const theme = getTheme(user);
   const [limits, setLimits] = useState({ diario: 100, semanal: 500 });
   const [weekExpenses, setWeekExpenses] = useState([]);
   const [editModal, setEditModal] = useState({ visible: false, expense: null });
@@ -94,18 +52,30 @@ export default function WeekScreen() {
     setRefreshing(false);
   }
 
-  const days = getDaysInWeek();
-  const todayStr = dateKey(new Date());
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  const diff = dayOfWeek === 0 ? 0 : -dayOfWeek;
+  const sunday = new Date(now);
+  sunday.setDate(now.getDate() + diff);
+
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(sunday);
+    d.setDate(sunday.getDate() + i);
+    days.push(d);
+  }
+
+  const todayKey = toDateStr(new Date());
 
   const sections = days.map((day) => {
-    const key = dateKey(day);
+    const key = toDateStr(day);
     const dayExpenses = weekExpenses.filter((e) => e.date === key);
     const total = dayExpenses.reduce((s, e) => s + e.value, 0);
-    const isToday = key === todayStr;
+    const isToday = key === todayKey;
     const isExpanded = expandedDays[key] ?? isToday;
 
     return {
-      title: `${DAY_NAMES[day.getDay()]} ${formatDate(day)}${isToday ? " (Hoje)" : ""}`,
+      title: `${DAY_NAMES[day.getDay()]} ${formatDateObj(day)}${isToday ? " (Hoje)" : ""}`,
       key,
       total,
       count: dayExpenses.length,
